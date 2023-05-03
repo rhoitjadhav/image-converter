@@ -16,6 +16,7 @@ class DatabaseInstance:
             max_overflow=20,
             pool_recycle=3600,
             pool_size=2,
+            pool_pre_ping=True
         )
         self._session_maker = sessionmaker(autocommit=False, bind=self._engine)
 
