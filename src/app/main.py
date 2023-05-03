@@ -1,11 +1,18 @@
-from fastapi import FastAPI
+# Packages
+from traceback import print_exception
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.middleware import Middleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine
 
+# Modules
+from app.utils.helper import ReturnValue
+from app.config import STATIC_FILES_DIR
+from app.apis.apis import router
 from app.database import db_instance
 from app.workers.celery import celery_app
 from app.workers.tasks import run_test_task
@@ -57,6 +64,17 @@ async def healthcheck():
     return health_response
 
 
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        # Add logging here
+        print_exception(e)
+        rv = ReturnValue(False, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         "Something went wrong", repr(e))
+        return JSONResponse(rv.to_dict(), status_code=rv.status_code)
+
+
 routes = [
     APIRoute("/", endpoint=root, methods=["GET"]),
     APIRoute("/health", endpoint=healthcheck, methods=["GET"]),
@@ -66,3 +84,9 @@ routes = [
 middleware = Middleware(CORSMiddleware)
 
 app = FastAPI(routes=routes, middleware=[middleware])
+
+app.mount("/static", StaticFiles(directory=STATIC_FILES_DIR), name="static")
+
+app.include_router(router)
+
+app.middleware('http')(catch_exceptions_middleware)
