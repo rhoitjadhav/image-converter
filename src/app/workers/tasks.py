@@ -1,20 +1,23 @@
 # Packages
-import os
-from typing import Type
+from typing import Type, AnyStr
 import logging
 import asyncio
 from fastapi import status
 from sqlalchemy.orm import Session
 
 # Modules
+from app.models import FilesTable
 from app.config import CONVERTED_IMAGE_RESOLUTION
 from app.utils.helper import ReturnValue, Helper
 from app.utils.wand_helper import WandHelper
-from app.models import FilesTable
 from app.workers.celery import celery_app, BaseDbTask, loop
 
 
 class Tasks:
+    """
+    All tasks implementation in defined in this class
+    """
+
     @staticmethod
     async def run_async_test_task(session: Session):
         # session is the db session from sqlalchemy
@@ -29,7 +32,20 @@ class Tasks:
             file_id: str,
             file_data: bytes,
             file_path: str,
-    ):
+    ) -> AnyStr:
+        """
+        Upload file
+
+        Args:
+            db: sqlalchemy instance
+            file_model: FilesTable instance
+            file_id: file id
+            file_data: contents of file
+            file_path: path of file
+
+        Returns:
+            AnyStr: file id
+        """
         file_ = db.query(file_model).filter(file_model.id == file_id).one()
         if not file_:
             logging.error(f"File {file_id} not found in database")
@@ -48,7 +64,17 @@ class Tasks:
             db: Session,
             file_model: Type[FilesTable],
             file_id: str
-    ):
+    ) -> AnyStr:
+        """
+        Convert image file into png
+        Args:
+            db: sqlalchemy instance
+            file_model: FilesTable instance
+            file_id: file id
+
+        Returns:
+            AnyStr: file id
+        """
         file = db.query(file_model).filter(file_model.id == file_id).one()
         if not file:
             logging.error(f"File {file_id} not found in database")
@@ -65,6 +91,7 @@ class Tasks:
         resolution = CONVERTED_IMAGE_RESOLUTION
         WandHelper.convert_to_png(file_path, new_file_path, resolution)
 
+        # Update records
         file.output_path = new_file_path
         file.output_resolution = resolution
         file.status = "completed"
@@ -136,5 +163,5 @@ def convert_to_png(self, file_id: str):
             self.session, FilesTable, file_id
         ))
     except Exception as exc:
-        logging.exception("exception while running upload_file task. retrying")
+        logging.exception("exception while running convert_to_png task. retrying")
         raise self.retry(exc=exc)

@@ -85,8 +85,11 @@ middleware = Middleware(CORSMiddleware)
 
 app = FastAPI(routes=routes, middleware=[middleware])
 
+# Mounting static folder
 app.mount("/static", StaticFiles(directory=STATIC_FILES_DIR), name="static")
 
+# Including router endpoints
 app.include_router(router)
 
+# Adding custom exception as middleware
 app.middleware('http')(catch_exceptions_middleware)

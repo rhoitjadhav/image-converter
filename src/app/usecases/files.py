@@ -1,6 +1,6 @@
 # Packages
 import os
-from typing import List, Type, AnyStr
+from typing import List, Type, Dict
 from sqlalchemy.orm import Session
 from fastapi import UploadFile, status
 from fastapi.encoders import jsonable_encoder
@@ -11,20 +11,32 @@ from app.workers.tasks import upload_file, convert_to_png
 from app.models import FilesTable
 from app.utils.helper import ReturnValue, Helper
 from app.utils.wand_helper import WandHelper
-from app.config import (
-    STATIC_FILES_DIR,
-    CONVERTED_IMAGE_RESOLUTION
-)
+from app.config import STATIC_FILES_DIR
 
 
 class FilesUsecase:
+    """
+    This class implements files related use cases
+    """
 
     @staticmethod
-    def _upload_file(
+    def _upload_images(
             db: Session,
             file: UploadFile,
             file_model: Type[FilesTable]
-    ) -> AnyStr:
+    ) -> Dict:
+        """
+        Upload images (png, jpeg, etc.) and convert them into png with
+        configured resolution.
+
+        Args:
+            db: sqlalchemy instance
+            file: UploadFile instance
+            file_model: FilesTable instance
+
+        Returns:
+            dict: a dictionary of filename, new_filename and file_id
+        """
         filename = f"{Helper.generate_random_text()}_{file.filename}"
         file_path = os.path.join(STATIC_FILES_DIR, filename)
         file_data = file.file.read()
@@ -50,7 +62,19 @@ class FilesUsecase:
             db: Session,
             file: UploadFile,
             file_model: Type[FilesTable]
-    ):
+    ) -> List:
+        """
+        Upload pdf file and convert extracted images into png with
+        configured resolution.
+
+        Args:
+            db: sqlalchemy instance
+            file: UploadFile instance
+            file_model: FilesTable instance
+
+        Returns:
+            list: list of dictionaries containing filename, new_filename and file_id
+        """
         files_id = []
         pdf_filename = f"{Helper.generate_random_text()}_{file.filename}"
         file_path = os.path.join(STATIC_FILES_DIR, pdf_filename)
@@ -101,6 +125,16 @@ class FilesUsecase:
             file_id: str,
             file_model: Type[FilesTable]
     ) -> ReturnValue:
+        """
+        Get file details by id
+        Args:
+            db: sqlalchemy instance
+            file_id: file id
+            file_model: FilesTable instance
+
+        Returns:
+            ReturnValue: file details
+        """
 
         file = db.query(file_model).filter(file_model.id == file_id).first()
         if not file:
@@ -119,6 +153,16 @@ class FilesUsecase:
             file_id: str,
             file_model: Type[FilesTable]
     ) -> ReturnValue:
+        """
+        Get file status
+        Args:
+            db: sqlalchemy instance
+            file_id: file id
+            file_model: FilesTable instance
+
+        Returns:
+            ReturnValue: file status
+        """
 
         file = db.query(file_model).filter(file_model.id == file_id).first()
         if not file:
@@ -132,13 +176,23 @@ class FilesUsecase:
             files: List[UploadFile],
             file_model: Type[FilesTable]
     ) -> ReturnValue:
+        """
+        Upload list of files
+        Args:
+            db: sqlalchemy instance
+            files: list of UploadFile instance
+            file_model: FilesTable instance
+
+        Returns:
+            ReturnValue: list of files id after added into db
+        """
         files_id = []
         for file in files:
             if "pdf" in file.content_type:
                 file_ids = self._upload_pdf_file(db, file, file_model)
                 files_id.extend(file_ids)
             else:
-                file_id = self._upload_file(db, file, file_model)
+                file_id = self._upload_images(db, file, file_model)
                 files_id.append(file_id)
 
         if not files_id:
