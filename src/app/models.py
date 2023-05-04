@@ -2,7 +2,7 @@
 from uuid import uuid4
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import text as sqlalchemy_text
-from sqlalchemy import Column, Text, ForeignKey, Integer
+from sqlalchemy import Column, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy_utils import ChoiceType
 
@@ -29,18 +29,6 @@ FILE_TYPE = [
     ("jpeg", "Jpeg"),
     ("pdf", "Pdf"),
 ]
-
-
-class UsersTable(Base):
-    __tablename__ = "users"
-
-    id = Column(
-        Integer,
-        primary_key=True,
-    )
-    username = Column(Text, nullable=False, unique=True)
-    email = Column(Text, nullable=False, unique=True)
-    password = Column(Text, nullable=False)
 
 
 class FilesTable(Base):
