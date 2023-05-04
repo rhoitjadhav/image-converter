@@ -199,3 +199,44 @@ class FilesUsecase:
             return ReturnValue(False, status.HTTP_422_UNPROCESSABLE_ENTITY, "Please select files to upload")
 
         return ReturnValue(True, status.HTTP_200_OK, "File is uploaded", data=files_id)
+
+    @staticmethod
+    def get_file_paths(
+            db: Session,
+            file_id: str,
+            file_model: Type[FilesTable]
+    ) -> ReturnValue:
+        """
+        Get file input/output file path
+        Args:
+            db: sqlalchemy instance
+            file_id: file id
+            file_model: FilesTable instance
+
+        Returns:
+            ReturnValue: file paths
+        """
+
+        file = db.query(file_model).filter(file_model.id == file_id).first()
+        if not file:
+            return ReturnValue(False, status.HTTP_404_NOT_FOUND, "File not found")
+
+        paths = {"file_id": file_id,
+                 "file_type": file.type,
+                 "path": file.path,
+                 "output_path": file.output_path,
+                 "resolution": file.resolution,
+                 "output_resolution": file.output_resolution,
+                 "images": []}
+
+        if file.type == "pdf":
+            files = db.query(file_model).filter(file_model.pdf_id == file_id).all()
+            for file in files:
+                paths["images"].append({
+                    "path": file.path,
+                    "output_path": file.output_path,
+                    "resolution": file.resolution,
+                    "output_resolution": file.output_resolution,
+                })
+
+        return ReturnValue(data=jsonable_encoder(paths))

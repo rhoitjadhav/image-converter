@@ -59,3 +59,15 @@ async def get_file_status(
     result = files_usecase.get_file_status(db, file_id, FilesTable)
     response.status_code = result.status_code
     return result
+
+
+@router.get("/{file_id}/paths")
+async def get_file_paths(
+        response: Response,
+        file_id: str,
+        db: Session = Depends(db_instance.initialize_session),
+        files_usecase: FilesUsecase = Depends(FilesUsecase)
+):
+    result = files_usecase.get_file_paths(db, file_id, FilesTable)
+    response.status_code = result.status_code
+    return result
