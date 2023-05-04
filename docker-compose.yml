@@ -41,12 +41,13 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+      - db
     networks:
       - backendnet
     volumes:
       - ./src/app:/app
       - ${PWD}/inotify-restart-celery.sh:/inotify-restart-celery.sh
-    command: "/inotify-restart-celery.sh"
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; /inotify-restart-celery.sh'
     environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
