@@ -42,10 +42,9 @@ Files Table
     - returns files data based on id
 - `POST /api/files/upload`
     - Upload files and returns id
-    - Allowed extensions *******png, jpg, pdf, jepg*******
+    - Allowed extensions _png_, _jpg_, _pdf_, _jpeg_
 - `POST /api/files/{file_id}/paths`
     - Returns files input/output paths along with resolution
-    - Allowed extensions *******png, jpg, pdf, jepg*******
 - `GET /api/files/{file_id}/status`
     - Returns status of files
 - `GET /static/{file_name}`
