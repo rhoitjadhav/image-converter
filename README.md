@@ -1,23 +1,23 @@
-# Base Microservice
+# Image Converter
 
-This is a template for a basic microservice.
+This project converts images into png files with specified resolution. The project uses Python as a primary language and
+Fastapi to expose the REST APIs. The image conversion process is handled by [ImageMagic](https://imagemagick.org/)
+library. To interact with ImageMagic library we are using [Wand](https://docs.wand-py.org/en/latest/) python package.
 
-Feel free to add to and edit as required.
-
-## Thoughts
+## Thoughts Process
 
 - It did not take me long to understand the code structure, however I did find difficulties in running it locally
   without docker compose as I wanted to understand execution of all the services. I was managed to run the services
   individually on local machine without docker compose
-- It took me 10-12 async hours to approach the problem and implement the all prioritized tasks.
+- It took me around 10-12 hours (async) to approach the problem and implement the all prioritized tasks.
 - I have also included files table schema for your reference
-- I have written [future improvements](#future-improvements) which comes to my mind while I was approaching to the
-  problem
 - I have implemented all the requirements including the retrieval of static images which works when we have shared
-  storage volume (scratch)
+  storage volume (`/scratch`).
 - I also found an issue while running worker on docker compose. Actually, the worker starts but won't wait for the db
   and rabbitmq to be in ready state even if we add depends_on. So I modify the bash command which is same in web
-  container
+  container.
+- I have written [future improvements](#future-improvements) which comes to my mind while I was approaching to the
+  problem.
 
 ## DB Schema
 
@@ -55,46 +55,49 @@ Files Table
 
 `files`
 
-- get_file_by_id()
+- `get_file_by_id()`
     - Returns file details
-- get_file_status_by_id()
+- `get_file_status_by_id()`
     - Returns file status
-- upload()
-    - upload_pdf_file()
+- `upload()`
+    - `upload_pdf_file()`
         - Store file details in db
         - Invoke celery tasks upload_file() and convert_to_png()
-    - upload_image_file()
+    - `upload_image_file()`
         - Store file details in db
         - Invoke celery tasks upload_file() and convert_to_png()
-- get_file_paths_by_id()
+- `get_file_paths_by_id()`
     - Returns file paths, resolution details
 
 `Celery tasks`
 
-- upload_file()
+- `upload_file()`
     - Save file to local storage (`/scratch`)
     - Update records of file such as status, path, etc
-- convert_to_png()
+- `convert_to_png()`
     - Convert the input file into png with specified resolution (3500x3500)
     - Update records of file such as status, resolution, etc.
 
 ## Future Improvements
 
-- Use of websockets to check real-time status of file processing
-- S3 bucket for storing images
-- CDN bucket for retrieving images quickly
-- Add unit tests to ensure the use cases is working correctly.
-    - We can use mock objects for database operations
-- Add error handling for invalid inputs
-    - Filenames with `../../file.pdf`
-    - png file containing jpg data
+- Use of websockets to check real-time status of file processing.
+- S3 bucket for storing images.
+- CDN bucket for retrieving images quickly.
+    - We can use mock objects for database operations.
+- Add error handling for invalid inputs.
+    - Filenames with `../../file.pdf`.
+    - png file containing jpg data.
 - Implement users management for managing respective files of the users since anyone has access to files data with
-  unique id
-    - Implement relationship between *files* and *users* table
-    - JWT token for authentication and authorization of apis
-- Allow only certain amount of images to be uploaded (max 10 images)
-    - If user is uploading pdf then total count of images should be not exceed max count
-- Allow limited size of images (max 5 MB)
+  unique id.
+    - Implement relationship between *files* and *users* table.
+    - JWT token for authentication and authorization of apis.
+- Allow only certain amount of images to be uploaded. (max 10 images)
+    - If user is uploading pdf then total count of images should be not exceed max count.
+- Allow limited size of images. (max 5 MB)
+- Add unit tests to ensure the use cases is working correctly.
+- Add performance testing using Locust to check the performance of application.
+- Deploy application in Kubernetes to easily manage and scale application in distributed system.
+- Add caching for frequently requested data using Redis.
 
 ---
 
